@@ -163,3 +163,7 @@ changelog:
 	@git chglog --next-tag HEAD -o CHANGELOG.md || true
 
 pre-commit: dep fmt lint view-cover changelog
+
+bundle:
+	go get -u ./...
+	go tool github.com/xoctopus/agents/internal/cmd/skill-install
