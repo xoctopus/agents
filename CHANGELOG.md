@@ -11,3 +11,7 @@
 
 * **skill-install:** add installer CLI to link skills for cursor/claude/codex
 
+### Test
+
+* fix unit testing
+

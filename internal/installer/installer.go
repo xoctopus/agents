@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -110,8 +111,20 @@ func sync(cmd *cobra.Command, src, dst string) error {
 		return fmt.Errorf("读取源目录失败: %s [%w]", src, err)
 	}
 
+	names := make([]string, 0, len(entries))
 	for _, entry := range entries {
-		name := entry.Name()
+		names = append(names, entry.Name())
+	}
+	sort.Strings(names)
+
+	maxName := 0
+	for _, name := range names {
+		if len(name) > maxName {
+			maxName = len(name)
+		}
+	}
+
+	for _, name := range names {
 		srcPath := filepath.Join(src, name)
 		dstPath := filepath.Join(dst, name)
 
@@ -119,7 +132,8 @@ func sync(cmd *cobra.Command, src, dst string) error {
 		if err := os.Symlink(srcPath, dstPath); err != nil {
 			return fmt.Errorf("安装失败 %s -> %s [%w]", dstPath, srcPath, err)
 		}
-		cmd.Printf("安装成功 [%s] ==> %s\n", name, dstPath)
+		pad := strings.Repeat(" ", maxName-len(name))
+		cmd.Printf("安装成功 [%s]%s ==> %s\n", name, pad, dstPath)
 	}
 
 	return nil
