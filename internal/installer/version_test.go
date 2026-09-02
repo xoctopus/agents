@@ -23,16 +23,20 @@ func TestVersion_Exec(t *testing.T) {
 
 	out := buf.String()
 	for _, want := range []string{
-		"github.com/spf13/cobra (",
-		"github.com/xoctopus/concx (",
-		"github.com/xoctopus/confx (",
-		"github.com/xoctopus/genx (",
+		"github.com/xoctopus/concx@v0.2.2",
+		"github.com/xoctopus/confx@v0.5.9",
+		"github.com/xoctopus/genx@v0.3.8",
+		"skills:",
+		"\tconcx",
+		"\tappx",
+		"\tkg",
+		"\tgenx",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("output missing %q:\n%s", want, out)
 		}
 	}
-	if strings.Contains(out, "skill:") {
-		t.Fatalf("output should not contain skill names:\n%s", out)
+	if strings.Contains(out, "github.com/spf13/cobra") {
+		t.Fatalf("output should not contain deps without +skill:\n%s", out)
 	}
 }

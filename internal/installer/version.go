@@ -52,7 +52,7 @@ func directs(modpath string) ([]*Info, error) {
 		if r.Indirect {
 			continue
 		}
-		skills := make([]string, 0, 0)
+		skills := make([]string, 0)
 		for _, c := range r.Syntax.Comments.Before {
 			if len(c.Token) > 0 {
 				token := strings.TrimSpace(strings.TrimPrefix(c.Token, "//"))
