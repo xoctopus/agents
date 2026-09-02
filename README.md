@@ -69,7 +69,7 @@ go tool skill-install
 
 1. 在 `go.mod` 对应 `require` 上方增加 `// +skill:<name>` (一个依赖可标注多个)
 2. 确保该模块已发布 (或 `replace` 到本地) 且存在 `.agents/skills/<name>/`
-3. 如需 blank import 固定依赖, 可在 `internal/cmd/skill-install` 中补充
+3. 如需 blank import 固定依赖, 可在 `cmd/skill-install` 中补充
 4. 重新执行安装命令
 
 示例:
