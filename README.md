@@ -37,28 +37,90 @@
 
 约定细节见 `github.com/xoctopus/genx/pkg/agent` 与 genx skill 中的 [skills-installation.spec.md](https://github.com/xoctopus/genx/blob/main/.agents/skills/genx/references/skills-installation.spec.md).
 
+## skill-install 命令
+
+CLI 入口: `cmd/skill-install`. 在仓库根目录执行:
+
+```bash
+go run ./cmd/skill-install <command> [flags]
+```
+
+### install
+
+安装 skills 并桥接到指定 Agent 目录. 流程:
+
+1. `GOWORK=off go get -u ./...` + `go mod tidy` 更新直接依赖
+2. 按 `go.mod` 中 `// +skill:<name>` 安装到 `.agents/skills/<name>`
+3. 将 `.agents/skills` 下每个 skill 强制链接到 Agent 目标目录
+
+```bash
+# 项目级, 链接到 .cursor/skills
+go run ./cmd/skill-install install --name cursor
+
+# 项目级, 链接到 .claude/skills
+go run ./cmd/skill-install install --name claude
+
+# 用户级, 链接到 ~/.cursor/skills
+go run ./cmd/skill-install install --name cursor --mode 1
+```
+
+| 参数     | 说明                                            |
+|----------|-------------------------------------------------|
+| `--name` | 必填. `cursor` / `claude` / `codex`             |
+| `--path` | 可选. 自定义目标目录, 不指定则用 Agent 默认路径 |
+| `--mode` | `0` 项目级(默认), `1` 当前用户 (`~` 下)         |
+
+Agent 默认目标路径:
+
+| Agent   | 项目级 (`mode=0`)  | 用户级 (`mode=1`)   |
+|---------|--------------------|---------------------|
+| cursor  | `.cursor/skills`   | `~/.cursor/skills`  |
+| claude  | `.claude/skills`   | `~/.claude/skills`  |
+| codex   | `.agents/skills`   | `~/.agents/skills`  |
+
+`codex` 项目级时源与目标相同, 仅执行依赖更新与 module skills 安装, 不做二次链接.
+
+安装后 Cursor 布局示例:
+
+```text
+.agents/skills/base/          # skill 源
+.cursor/skills/base -> .../.agents/skills/base
+```
+
+### version
+
+打印 `go.mod` 中带 `// +skill:` 标注的直接依赖及对应 skill 名称:
+
+```bash
+go run ./cmd/skill-install version
+```
+
+输出示例:
+
+```text
+github.com/xoctopus/concx@v0.2.2
+skills:
+	concx
+github.com/xoctopus/confx@v0.5.9
+skills:
+	appx
+	kg
+```
+
 ## 如何安装 skills
 
 ### 前置条件
 
-- 已拉取本仓库依赖 (`go mod download` / `go mod tidy`)
+- 在仓库根目录执行 (需能读取 `go.mod`)
 - 各 skill 提供方在模块内提供 `.agents/skills/<name>/` (至少含 `SKILL.md`)
 
 ### 安装
 
-在仓库根目录执行:
-
 ```bash
-go run ./internal/cmd/skill-install
+go run ./cmd/skill-install install --name cursor
 ```
 
-或使用 Go 1.24+ tool 机制 (本仓库已在 `go.mod` 声明 `tool`):
-
-```bash
-go tool skill-install
-```
-
-安装器会:
+`genx/pkg/agent` 安装阶段会:
 
 1. 解析当前 `go.mod` 中带 `// +skill:<name>` 的直接依赖
 2. 在 `GOMODCACHE` (或 `replace` 路径) 定位 `<module>/.agents/skills/<name>`
@@ -69,8 +131,8 @@ go tool skill-install
 
 1. 在 `go.mod` 对应 `require` 上方增加 `// +skill:<name>` (一个依赖可标注多个)
 2. 确保该模块已发布 (或 `replace` 到本地) 且存在 `.agents/skills/<name>/`
-3. 如需 blank import 固定依赖, 可在 `cmd/skill-install` 中补充
-4. 重新执行安装命令
+3. 如需 blank import 固定依赖, 可在 `cmd/skill-install/main.go` 中补充
+4. 重新执行 `install` 命令
 
 示例:
 
@@ -88,6 +150,6 @@ require (
 | 现象                      | 检查项                                                      |
 |---------------------------|-------------------------------------------------------------|
 | 安装报错找不到 skill 目录 | 模块版本是否含 `.agents/skills/<name>`, 或 replace 是否生效 |
-| symlink 指向旧内容        | 依赖版本是否过旧; 需要时 bump 版本后重装                    |
+| symlink 指向旧内容        | 重新执行 `install`, 会强制覆盖目标目录中的链接              |
 | 未安装某个 skill          | `go.mod` 是否写了 `// +skill:<name>`, 且为直接依赖          |
-| 在子目录执行失败          | Installer 会向上查找 `go.mod`; 建议在仓库根执行             |
+| Agent 读不到 skill        | 是否已对目标 Agent 执行 `install --name <agent>`            |
