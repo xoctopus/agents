@@ -26,6 +26,8 @@ const (
 
 const source = ".agents/skills"
 
+var agents = []Agent{CLAUDE, CURSOR, CODEX}
+
 var gDefaultPath = map[Agent]string{
 	CLAUDE: ".claude/skills",
 	CURSOR: ".cursor/skills",
@@ -34,16 +36,25 @@ var gDefaultPath = map[Agent]string{
 
 // Installer 安装依赖skill
 type Installer struct {
-	// AgentName 名称 如 cursor claude codex
-	Name Agent `cmd:"name,require"`
-	// Path 安装路径. 不指定则使用 Agent 默认路径
+	// Name 名称 如 cursor claude codex. 不指定则安装全部
+	Name Agent `cmd:"name"`
+	// Path 安装路径. 不指定则使用 Agent 默认路径; 仅可与 Name 同时使用
 	Path string `cmd:"path"`
 	// Mode 安装模式. 0: 项目级(当前路径) 1: 当前用户
 	Mode int `cmd:"mode,default=0"`
+	// UpgradeToLatest 是否更新最新go module依赖
+	UpgradeToLatest bool `cmd:"upgrade,short=u,noopdef=true"`
 }
 
 func (i *Installer) Exec(cmd *cobra.Command, _ ...string) error {
-	if err := update(cmd); err != nil {
+	targets := agents
+	if len(i.Name) > 0 {
+		targets = []Agent{Agent(strings.ToUpper(string(i.Name)))}
+	} else if len(i.Path) > 0 {
+		return fmt.Errorf("--path 仅可与 --name 同时使用")
+	}
+
+	if err := update(cmd, i.UpgradeToLatest); err != nil {
 		return err
 	}
 
@@ -51,39 +62,51 @@ func (i *Installer) Exec(cmd *cobra.Command, _ ...string) error {
 		return fmt.Errorf("安装失败: %w", err)
 	}
 
-	i.Name = Agent(strings.ToUpper(string(i.Name)))
-	target, ok := gDefaultPath[i.Name]
-	if !ok {
-		cmd.Println("支持的 agent: cursor, claude, codex")
-		return fmt.Errorf("不支持的 agent: %s", i.Name)
-	}
-	if len(i.Path) > 0 {
-		target = i.Path
-	}
-
-	if i.Mode == 1 {
-		target = filepath.Join(must.NoErrorV(os.UserHomeDir()), target)
-	}
-
 	src := must.NoErrorV(filepath.Abs(source))
-	dst := must.NoErrorV(filepath.Abs(target))
-
 	_, err := os.Stat(src)
 	must.NoErrorF(err, "读取源目录错误")
 
-	if src == dst {
-		cmd.Printf("安装成功: ==> %s\n", target)
+	for _, name := range targets {
+		target, ok := gDefaultPath[name]
+		if !ok {
+			cmd.Println("支持的 agent: cursor, claude, codex")
+			return fmt.Errorf("不支持的 agent: %s", name)
+		}
+
+		cmd.Printf("安装 %s...\n", name)
+
+		if len(i.Path) > 0 {
+			target = i.Path
+		}
+
+		if i.Mode == 1 {
+			target = filepath.Join(must.NoErrorV(os.UserHomeDir()), target)
+		}
+
+		dst := must.NoErrorV(filepath.Abs(target))
+
+		if src == dst {
+			cmd.Printf("安装成功: ==> %s\n", target)
+			continue
+		}
+
+		if err = os.MkdirAll(dst, 0o755); err != nil {
+			return fmt.Errorf("目标目录创建失败: %s [%w]", dst, err)
+		}
+
+		if err = sync(cmd, src, dst); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func update(cmd *cobra.Command, upgrade bool) error {
+	if !upgrade {
 		return nil
 	}
 
-	if err = os.MkdirAll(dst, 0o755); err != nil {
-		return fmt.Errorf("目标目录创建失败: %s [%w]", dst, err)
-	}
-
-	return sync(cmd, src, dst)
-}
-
-func update(cmd *cobra.Command) error {
+	cmd.Println("开始更新依赖...")
 	info := must.NoErrorV(os.Stat("go.mod"))
 	must.BeTrue(!info.IsDir())
 

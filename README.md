@@ -2,27 +2,30 @@
 
 聚合 `xoctopus` 生态中的 Agent Skills, 作为统一的技能入口.
 
-本仓库通过 Go module 依赖声明所需 skills, 再用 `genx/pkg/agent` 安装器把各模块提供的 skill 链接到本地 `.agents/skills`.
+本仓库通过 Go module 依赖声明所需 skills, 再用 `genx/pkg/agent` 安装器把各模块提供的
+skill 链接到本地 `.agents/skills`.
 
 ## 做了什么
 
-1. **统一安装入口**: 在 `go.mod` 的直接依赖上标注 `// +skill:<name>`, 一次安装多个模块的 skills.
+1. **统一安装入口**: 在 `go.mod` 的直接依赖上标注 `// +skill:<name>`, 一次安装多个模块的
+   skills.
 2. **版本随依赖**: skill 内容来自对应 module 版本 (含 `replace`), 与代码依赖对齐.
-3. **本地可发现**: 安装结果在 `.agents/skills/<name>`, 供 Cursor / Agent 读取 `SKILL.md` 与 references.
+3. **本地可发现**: 安装结果在 `.agents/skills/<name>`, 供 Cursor / Agent 读取
+   `SKILL.md` 与 references.
 4. **本仓库自带 skill**: `base` (文档与提交信息约定), 其余 skill 来自依赖模块.
 
 当前已声明的 skills:
 
-| Skill  | 提供模块                         | 说明概要                         |
-|--------|----------------------------------|----------------------------------|
-| base   | 本仓库                           | 文档与提交信息规范               |
-| appx   | `github.com/xoctopus/confx`      | 组装 confx 可执行应用            |
-| kg     | `github.com/xoctopus/confx`      | 结构化 cache key 命名            |
-| concx  | `github.com/xoctopus/concx`      | 受约束并发 (生命周期/编排/通信)  |
-| genx   | `github.com/xoctopus/genx`       | 代码生成扩展与 skills 安装       |
-| logx   | `github.com/xoctopus/logx`       | 结构化日志与 span 上下文         |
-| sqlx   | `github.com/xoctopus/sqlx`       | SQL 构建, 模型与生成接入         |
-| testx  | `github.com/xoctopus/x`          | 断言与 BDD 测试约定              |
+| Skill | 提供模块                    | 说明概要                        |
+|-------|-----------------------------|---------------------------------|
+| base  | 本仓库                      | 文档与提交信息规范              |
+| appx  | `github.com/xoctopus/confx` | 组装 confx 可执行应用           |
+| kg    | `github.com/xoctopus/confx` | 结构化 cache key 命名           |
+| concx | `github.com/xoctopus/concx` | 受约束并发 (生命周期/编排/通信) |
+| genx  | `github.com/xoctopus/genx`  | 代码生成扩展与 skills 安装      |
+| logx  | `github.com/xoctopus/logx`  | 结构化日志与 span 上下文        |
+| sqlx  | `github.com/xoctopus/sqlx`  | SQL 构建, 模型与生成接入        |
+| testx | `github.com/xoctopus/x`     | 断言与 BDD 测试约定             |
 
 安装后的布局示意:
 
@@ -35,7 +38,8 @@
     ...
 ```
 
-约定细节见 `github.com/xoctopus/genx/pkg/agent` 与 genx skill 中的 [skills-installation.spec.md](https://github.com/xoctopus/genx/blob/main/.agents/skills/genx/references/skills-installation.spec.md).
+约定细节见 `github.com/xoctopus/genx/pkg/agent` 与 genx skill
+中的 [skills-installation.spec.md](https://github.com/xoctopus/genx/blob/main/.agents/skills/genx/references/skills-installation.spec.md).
 
 ## skill-install 命令
 
@@ -49,42 +53,49 @@ go run ./cmd/skill-install <command> [flags]
 
 安装 skills 并桥接到指定 Agent 目录. 流程:
 
-1. `GOWORK=off go get -u ./...` + `go mod tidy` 更新直接依赖
+1. (可选, `--upgrade`/`-u`) `GOWORK=off go get -u ./...` + `go mod tidy` 更新直接依赖
 2. 按 `go.mod` 中 `// +skill:<name>` 安装到 `.agents/skills/<name>`
 3. 将 `.agents/skills` 下每个 skill 强制链接到 Agent 目标目录
 
 ```bash
-# 项目级, 链接到 .cursor/skills
+# 项目级, 安装全部 agent (claude / cursor / codex)
+go run ./cmd/skill-install install
+
+# 项目级, 仅链接到 .cursor/skills
 go run ./cmd/skill-install install --name cursor
 
-# 项目级, 链接到 .claude/skills
+# 项目级, 仅链接到 .claude/skills
 go run ./cmd/skill-install install --name claude
 
 # 用户级, 链接到 ~/.cursor/skills
 go run ./cmd/skill-install install --name cursor --mode 1
+
+# 安装前先升级依赖到最新
+go run ./cmd/skill-install install -u
 ```
 
-| 参数     | 说明                                            |
-|----------|-------------------------------------------------|
-| `--name` | 必填. `cursor` / `claude` / `codex`             |
-| `--path` | 可选. 自定义目标目录, 不指定则用 Agent 默认路径 |
-| `--mode` | `0` 项目级(默认), `1` 当前用户 (`~` 下)         |
+| 参数               | 说明                                                                    |
+|--------------------|-------------------------------------------------------------------------|
+| `--name`           | 可选. `cursor` / `claude` / `codex`; 不指定则安装全部                   |
+| `--path`           | 可选. 自定义目标目录, 需与 `--name` 同时使用; 不指定则用 Agent 默认路径 |
+| `--mode`           | `0` 项目级(默认), `1` 当前用户 (`~` 下)                                 |
+| `-u` / `--upgrade` | 可选. 安装前执行 `go get -u` 更新依赖                                   |
 
 Agent 默认目标路径:
 
-| Agent   | 项目级 (`mode=0`)  | 用户级 (`mode=1`)   |
-|---------|--------------------|---------------------|
-| cursor  | `.cursor/skills`   | `~/.cursor/skills`  |
-| claude  | `.claude/skills`   | `~/.claude/skills`  |
-| codex   | `.agents/skills`   | `~/.agents/skills`  |
+| Agent  | 项目级 (`mode=0`) | 用户级 (`mode=1`)  |
+|--------|-------------------|--------------------|
+| cursor | `.cursor/skills`  | `~/.cursor/skills` |
+| claude | `.claude/skills`  | `~/.claude/skills` |
+| codex  | `.agents/skills`  | `~/.agents/skills` |
 
-`codex` 项目级时源与目标相同, 仅执行依赖更新与 module skills 安装, 不做二次链接.
+`codex` 项目级时源与目标相同 (均为 `.agents/skills`), 跳过二次链接, 避免自引用 symlink.
 
 安装后 Cursor 布局示例:
 
 ```text
-.agents/skills/base/          # skill 源
-.cursor/skills/base -> .../.agents/skills/base
+.agents/skills/concx/         # skill 源 (指向 module cache)
+.cursor/skills/concx -> .../.agents/skills/concx
 ```
 
 ### version
@@ -98,10 +109,10 @@ go run ./cmd/skill-install version
 输出示例:
 
 ```text
-github.com/xoctopus/concx@v0.2.2
+github.com/xoctopus/concx@v0.2.3
 skills:
 	concx
-github.com/xoctopus/confx@v0.5.9
+github.com/xoctopus/confx@v0.6.0
 skills:
 	appx
 	kg
@@ -117,6 +128,10 @@ skills:
 ### 安装
 
 ```bash
+# 安装全部 agent
+go run ./cmd/skill-install install
+
+# 仅安装 cursor
 go run ./cmd/skill-install install --name cursor
 ```
 
@@ -139,7 +154,7 @@ go run ./cmd/skill-install install --name cursor
 ```go
 require (
 	// +skill:logx
-	github.com/xoctopus/logx v0.3.7
+	github.com/xoctopus/logx v0.3.9
 )
 ```
 
@@ -152,4 +167,4 @@ require (
 | 安装报错找不到 skill 目录 | 模块版本是否含 `.agents/skills/<name>`, 或 replace 是否生效 |
 | symlink 指向旧内容        | 重新执行 `install`, 会强制覆盖目标目录中的链接              |
 | 未安装某个 skill          | `go.mod` 是否写了 `// +skill:<name>`, 且为直接依赖          |
-| Agent 读不到 skill        | 是否已对目标 Agent 执行 `install --name <agent>`            |
+| Agent 读不到 skill        | 是否已执行 `install`（或 `install --name <agent>`）         |
