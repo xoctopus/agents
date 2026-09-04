@@ -7,18 +7,18 @@ tool github.com/xoctopus/agents/internal/cmd/gen
 require (
 	github.com/spf13/cobra v1.10.2
 	// +skill:concx
-	github.com/xoctopus/concx v0.2.2
+	github.com/xoctopus/concx v0.2.3
 	// +skill:appx
 	// +skill:kg
-	github.com/xoctopus/confx v0.5.9
+	github.com/xoctopus/confx v0.6.0
 	// +skill:genx
-	github.com/xoctopus/genx v0.3.8
+	github.com/xoctopus/genx v0.3.9
 	// +skill:logx
-	github.com/xoctopus/logx v0.3.8
+	github.com/xoctopus/logx v0.3.9
 	// +skill:sqlx
-	github.com/xoctopus/sqlx v0.4.3
+	github.com/xoctopus/sqlx v0.4.4
 	// +skill:testx
-	github.com/xoctopus/x v0.5.8
+	github.com/xoctopus/x v0.5.9
 	golang.org/x/mod v0.40.0
 )
 
