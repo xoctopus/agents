@@ -1,8 +1,8 @@
 ---
 name: base
-description:
-  - 说明如何撰写文档
-  - 说明如何撰写仓库提交信息
+description: >-
+  说明如何撰写文档与仓库提交信息.
+  当需要编写或修改 `doc.go` / Markdown 文档, 或撰写 git commit message 时使用.
 ---
 
 
@@ -20,7 +20,7 @@ description:
 1. 遵循 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) 规范
 2. 中文英文选择按照仓库惯例
 3. 如果是中文, 使用半角标点, 切勿使用全角标点. 
-4. 多个改动点提交格式例子如下:
+4. 多个改动点提交格式例子如下: summary 和 detail 需要提炼重点, 切勿啰嗦.
 
 ```
 git commit -m "feat(module): summary mainly" \
