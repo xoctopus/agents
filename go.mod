@@ -19,7 +19,7 @@ require (
 	github.com/xoctopus/sqlx v0.4.4
 	// +skill:testx
 	github.com/xoctopus/x v0.5.9
-	golang.org/x/mod v0.40.0
+	golang.org/x/mod v0.41.0
 )
 
 require (
