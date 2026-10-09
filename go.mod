@@ -10,7 +10,7 @@ require (
 	github.com/xoctopus/concx v0.2.3
 	// +skill:appx
 	// +skill:kg
-	github.com/xoctopus/confx v0.6.0
+	github.com/xoctopus/confx v0.6.2
 	// +skill:genx
 	github.com/xoctopus/genx v0.3.9
 	// +skill:logx
