@@ -1,5 +1,7 @@
 # agents
 
+> **本仓库已归档, 不再维护.** 请改用 [`devgen skill install`](https://github.com/xoctopus/devx/blob/main/README.md#agent-skills) 完成仓库级 Agent 桥接与用户级 platform skills 安装; 说明见 [devx README](https://github.com/xoctopus/devx/blob/main/README.md).
+
 聚合 `xoctopus` 生态中的 Agent Skills, 作为统一的技能入口.
 
 本仓库通过 Go module 依赖声明所需 skills, 再用 `genx/pkg/agent` 安装器把各模块提供的
@@ -41,7 +43,9 @@ skill 链接到本地 `.agents/skills`.
 约定细节见 `github.com/xoctopus/genx/pkg/agent` 与 genx skill
 中的 [skills-installation.spec.md](https://github.com/xoctopus/genx/blob/main/.agents/skills/genx/references/skills-installation.spec.md).
 
-## skill-install 命令
+## skill-install 命令 (已归档)
+
+以下为历史用法. 新流程请使用 [devx README — Agent skills](https://github.com/xoctopus/devx/blob/main/README.md#agent-skills) 中的 `go tool skill-install` 与 `devgen skill install`.
 
 CLI 入口: `cmd/skill-install`. 在仓库根目录执行:
 
